@@ -1,3 +1,7 @@
+
+<?php
+session_start();  
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -78,7 +82,7 @@
 		<header class="main-header">
 
 			<!-- Logo -->
-			<a href="/Dashboard" class="logo">
+			<a href="./Layout.php" class="logo">
 				<!-- mini logo for sidebar mini 50x50 pixels -->
 				<span class="logo-mini">
 					<img src="../Content/image/masterinpetslogo.png" alt="masterinpets" />
@@ -104,25 +108,21 @@
 						<!-- User Account Menu -->
 						<li class="dropdown user user-menu">
 							<!-- Menu Toggle Button -->
-							<a href="#" class="dropdown-toggle" data-toggle="dropdown">
-								<!-- The user image in the navbar-->
-								<img src="../Content/image/user-default-blanco.png" class="user-image" alt="User Image">
-								<span class="hidden-xs">NILTON VERA</span>
-							</a>
+							<a href="#" class="dropdown-toggle" data-toggle="dropdown" id="navbarDropdownMenuLink">
+									<img src="../Content/image/user-default-blanco.png" class="user-image" alt="User Image" id = "fotopequenia">
+									<span class="hidden-xs" id="userName">Iniciar Sesión</span>
+								</a>
 							<ul class="dropdown-menu">
 								<!-- The user image in the menu -->
 								<li class="user-header">
-									<img src="../Content/image/user-default-blanco.png" class="img-circle" alt="User Image">
-									<p>
-										NILTON VERA
-									</p>
+									<img src="../Content/image/user-default-blanco.png" class="img-circle" alt="User Image" id = "fotogrande">
+									<p id="userHeaderName">Iniciar Sesión</p>
 								</li>
 								<!-- Menu Footer-->	
 								<li class="user-footer">
-									<center>
-										<button>Cerrar sesión</button>
-									</center>
 									
+										<a href="Perfil.php" class="btn btn-default">Ver perfil</a>
+										<a href="../index.php" class="btn btn-default">Cerrar sesión</a>									
 								</li>
 							</ul>
 						</li>
@@ -140,12 +140,11 @@
 				<ul class="sidebar-menu">
 					<li class="header">Menu</li>
 					<li><a href="../views/Producto.php"><i class="fa fa-product-hunt"></i> <span>PRODUCTOS</span></a></li>
-					<li class="active"><a href="../views/Clientes.php"><i class="fa fa-users"></i> <span>CLIENTES</span></a></li>
-					<li><a href="/Ventas"><i class="fa fa-shopping-cart"></i> <span>VENTAS</span></a></li>
+					<li><a href="../views/Clientes.php"><i class="fa fa-users"></i> <span>CLIENTES</span></a></li>
+					<li><a href="../views/Ventas.php"><i class="fa fa-shopping-cart"></i> <span>VENTAS</span></a></li>
 				</ul>
 				<!-- /.sidebar-menu -->
 			</section>
-            
 			<!-- /.sidebar -->
 		</aside>
 		
@@ -235,11 +234,25 @@
 	<!--SlimScroll-->
 	<script src="../Content/plugins/slimScroll/jquery.slimscroll.min.js"></script>
 	<script>
-var table;  // Declaración global de la variable table
+    // Variables de PHP a JavaScript
+    <?php
+        if (isset($_SESSION['session_email'], $_SESSION['name'], $_SESSION['user_id'])) {
+            echo "var userEmail = " . json_encode($_SESSION['session_email']) . ";";
+            echo "var userName = " . json_encode($_SESSION['name']) . ";";
+            echo "var userId = " . json_encode($_SESSION['user_id']) . ";";
+            echo "console.log('Bienvenido, ' + userName + ' (' + userEmail + ')');";
+        } else {
+            echo "window.location.href = 'login.php';";  // Redireccionar si las sesiones no están definidas
+        }
+    ?>
+</script>
+	<script>
+var table;  
 var valor, editar = 0; 
 $(document).ready(function () {
-
+	obtenerNombreUsuario();
     cargarClientes();
+	obtenerInformacionUsuario();
 });
 
 
@@ -265,6 +278,21 @@ function eliminar_form(id){
 	   });
 	   cargarClientes();
 }
+function obtenerNombreUsuario() {
+    $.ajax({
+        url: '../controllers/Usuario/ObtenerNombre.php', 
+        type: 'POST',
+        data: { userId: userId }, 
+        success: function(response) {
+            $('#userName').text(response); 
+			$('#userHeaderName').text(response); 
+        },
+        error: function() {
+            console.error('Error al obtener el nombre del usuario');
+            $('#userName').text('Iniciar Sesión'); 
+        }
+    });
+}
    function cargarClientes(){
     $.ajax({ 
         type: "POST",
@@ -277,6 +305,31 @@ function eliminar_form(id){
         },
         error: function() {
             alert('No se pudo cargar la información de los productos');
+        }
+    });
+}
+function obtenerInformacionUsuario() {
+    $.ajax({
+        url: '../controllers/Usuario/ObtenerUsuario.php',
+        type: 'POST',
+        async: false,
+        data: { userId: userId },
+        success: function(response) {
+            if (!response.startsWith('Error')) {
+				console.log(response);
+                var datos = response.split('|');
+                var imgPath = datos[2] ? './../img/fotos/' + datos[2] : '../Content/image/user-default-blanco.png';
+                $('#userImage, #userHeaderImage').attr('src', imgPath);
+				$('#fotopequenia').attr('src',imgPath);
+				$('#fotogrande').attr('src',imgPath);
+            } else {
+                console.error('Error al obtener la información del usuario:', response);
+                $('#userName').text('Iniciar Sesión');
+            }
+        },
+        error: function() {
+            console.error('Error al conectar con el servidor.');
+            $('#userName').text('Iniciar Sesión');
         }
     });
 }

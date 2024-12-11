@@ -2,11 +2,16 @@
 include('../../administrador/config/bd.php');
 $valores = "";
 
-// Abrimos la conexión a la base de datos
 $conn = conectar();
 
-// Consulta a la base de datos para productos
+$filtro = isset($_GET['filtro']) ? $_GET['filtro'] : '';
+
 $sql = "SELECT pkProducto, Producto, Descripcion, Precio, Stock, Imagen FROM producto";
+if (!empty($filtro)) {
+    $filtro = mysqli_real_escape_string($conn, $filtro);
+    $sql .= " WHERE Producto LIKE '%$filtro%'";
+}
+
 $result = mysqli_query($conn, $sql);
 
 while($crow = mysqli_fetch_assoc($result)){

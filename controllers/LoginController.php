@@ -1,64 +1,53 @@
 <?php
+session_start();  
+
 include('../administrador/config/bd.php');
 
 $email = $_POST['username'];
 $password_user = $_POST['password'];
-$sql = "SELECT * FROM usuario WHERE cCorreo = '$email'";
+
 $conn = conectar();
+
+$sql = "SELECT * FROM usuario WHERE cCorreo = '$email'";
 $result = mysqli_query($conn, $sql);
 
-if ($result->num_rows > 0) {
-    $row = mysqli_fetch_assoc($result);
+if (mysqli_num_rows($result) > 0) {
+    $row = mysqli_fetch_assoc($result); 
+    $userId = $row['pkUsuario'];
 
-    // Verificar si el usuario es administrador (fkRol == 1)
     if ($row['fkRol'] == 1) {
-        // Comparar directamente sin desencriptar para el administrador
         if ($password_user === $row['cPassword']) {
-            session_start();
             $_SESSION['session_email'] = $email; 
-            $_SESSION['name'] = $row['cNombre']; // Almacenar el nombre en la sesión
-            echo 'success-admin';  // Respuesta para éxito de login de administrador
+            $_SESSION['name'] = $row['cNombre'];
+            $_SESSION['user_id'] = $userId;
+            echo 'success-admin'; 
         } else {
-            echo 'error';  // Respuesta para error de login
+            echo 'error';  
         }
     } else {
-        // Desencriptar y comparar para usuarios que no son administradores
         if (password_verify($password_user, $row['cPassword'])) {
-            $userId = $row['pkUsuario'];
-            
-            // Buscar pkCliente usando el fkUsuario (userId)
-            $sqlCliente = "SELECT pkCliente FROM Cliente WHERE fkUsuario = '$userId'";
-            $resultCliente = mysqli_query($conn, $sqlCliente);
+            $sql = "SELECT cl.pkCliente, ca.pkCarrito FROM cliente cl
+                    LEFT JOIN carrito ca ON cl.pkCliente = ca.fkCliente
+                    WHERE cl.fkUsuario = '$userId'";
+            $result = mysqli_query($conn, $sql);
 
-            if ($resultCliente->num_rows > 0) {
-                $rowCliente = mysqli_fetch_assoc($resultCliente);
-                $clienteId = $rowCliente['pkCliente'];
-
-                // Buscar pkCarrito usando el fkCliente (clienteId)
-                $sqlCarrito = "SELECT pkCarrito FROM carrito WHERE fkCliente = '$clienteId'";
-                $resultCarrito = mysqli_query($conn, $sqlCarrito);
-
-                if ($resultCarrito->num_rows > 0) {
-                    $rowCarrito = mysqli_fetch_assoc($resultCarrito);
-                    $carritoId = $rowCarrito['pkCarrito'];
-
-                    session_start();
-                    $_SESSION['session_email'] = $email;
-                    $_SESSION['name'] = $row['cNombre']; // Almacenar el nombre en la sesión
-                    $_SESSION['carrito_id'] = $carritoId; // Almacenar el pkCarrito en la sesión
-                    echo 'success-user'; // Respuesta para éxito de login de usuario
-                } else {
-                    echo 'error'; // Error al encontrar carrito
-                }
+            if (mysqli_num_rows($result) > 0) {
+                $info = mysqli_fetch_assoc($result);
+                $_SESSION['session_email'] = $email;
+                $_SESSION['name'] = $row['cNombre'];
+                $_SESSION['user_id'] = $userId;
+                $_SESSION['carrito_id'] = $info['pkCarrito'];
+                $_SESSION['pkCliente'] = $info['pkCliente'];
+                echo 'success-user'; 
             } else {
-                echo 'error'; // Error al encontrar cliente
+                echo 'error'; 
             }
         } else {
-            echo 'error';
+            echo 'error'; 
         }
     }
 } else {
-    echo 'error';  // Usuario no encontrado
+    echo 'error';  
 }
 
 desconectar($conn);

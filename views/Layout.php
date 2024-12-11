@@ -1,4 +1,7 @@
 
+<?php
+session_start();  
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -8,11 +11,12 @@
 	<meta http-equiv="pragma" content="no-cache" />
 	<title>Master In Pets | Admin</title>
 	<link rel="icon" type="image/png" href="../Content/image/masterinpetslogo.png">
-	<!-- Tell the browser to be responsive to screen width -->
 	<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
 	<meta name="viewport" content="initial-scale=1.0, target-densitydpi=device-dpi" />
 	<!-- Bootstrap 3.3.6 -->
 	<link href="../Content/plugins/Bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+
 	<link href="../Content/plugins/Boostrap.Responsive/responsive.bootstrap.min.css" rel="stylesheet" />
 	<!-- Font Awesome -->
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -41,10 +45,7 @@
 			img.src = ruta;
 		}
 	</script>
-	<!--[if lt IE 9]>
-		<script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
-		<script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-	<![endif]-->
+
 </head>
 <body class="hold-transition skin-gmanteq sidebar-mini fixed">
 	<div id="adminlte--Loading">
@@ -57,7 +58,7 @@
 		<header class="main-header">
 
 			<!-- Logo -->
-			<a href="/Dashboard" class="logo">
+			<a href="./Layout.php" class="logo">
 				<!-- mini logo for sidebar mini 50x50 pixels -->
 				<span class="logo-mini">
 					<img src="../Content/image/masterinpetslogo.png" alt="masterinpets" />
@@ -83,25 +84,21 @@
 						<!-- User Account Menu -->
 						<li class="dropdown user user-menu">
 							<!-- Menu Toggle Button -->
-							<a href="#" class="dropdown-toggle" data-toggle="dropdown">
-								<!-- The user image in the navbar-->
-								<img src="../Content/image/user-default-blanco.png" class="user-image" alt="User Image">
-								<span class="hidden-xs">NILTON VERA</span>
-							</a>
+							<a href="#" class="dropdown-toggle" data-toggle="dropdown" id="navbarDropdownMenuLink">
+									<img src="../Content/image/user-default-blanco.png" class="user-image" alt="User Image" id = "fotopequenia">
+									<span class="hidden-xs" id="userName">Iniciar Sesión</span>
+								</a>
 							<ul class="dropdown-menu">
 								<!-- The user image in the menu -->
 								<li class="user-header">
-									<img src="../Content/image/user-default-blanco.png" class="img-circle" alt="User Image">
-									<p>
-										NILTON VERA
-									</p>
+									<img src="../Content/image/user-default-blanco.png" class="img-circle" alt="User Image" id = "fotogrande">
+									<p id="userHeaderName">Iniciar Sesión</p>
 								</li>
 								<!-- Menu Footer-->	
 								<li class="user-footer">
-									<center>
-										<button>Cerrar sesión</button>
-									</center>
 									
+										<a href="Perfil.php" class="btn btn-default">Ver perfil</a>
+										<a href="../index.php" class="btn btn-default">Cerrar sesión</a>									
 								</li>
 							</ul>
 						</li>
@@ -120,7 +117,7 @@
 					<li class="header">Menu</li>
 					<li><a href="../views/Producto.php"><i class="fa fa-product-hunt"></i> <span>PRODUCTOS</span></a></li>
 					<li><a href="../views/Clientes.php"><i class="fa fa-users"></i> <span>CLIENTES</span></a></li>
-					<li><a href="/Ventas"><i class="fa fa-shopping-cart"></i> <span>VENTAS</span></a></li>
+					<li><a href="../views/Ventas.php"><i class="fa fa-shopping-cart"></i> <span>VENTAS</span></a></li>
 				</ul>
 				<!-- /.sidebar-menu -->
 			</section>
@@ -184,6 +181,65 @@
 	<script src="../Content/plugins/slimScroll/jquery.slimscroll.min.js"></script>
 	<!-- Section Scripts -->
 	<!-- Script General  -->
+	<script>
+    <?php
+        if (isset($_SESSION['session_email'], $_SESSION['name'], $_SESSION['user_id'])) {
+            echo "var userEmail = " . json_encode($_SESSION['session_email']) . ";";
+            echo "var userName = " . json_encode($_SESSION['name']) . ";";
+            echo "var userId = " . json_encode($_SESSION['user_id']) . ";";
+            echo "console.log('Bienvenido, ' + userName + ' (' + userEmail + ')');";
+        } else {
+            echo "window.location.href = 'login.php';";  
+        }
+    ?>
+</script>
+<script>
+
+$(document).ready(function () {
+	obtenerNombreUsuario();
+	obtenerInformacionUsuario();
+});
+function obtenerInformacionUsuario() {
+    $.ajax({
+        url: '../controllers/Usuario/ObtenerUsuario.php',
+        type: 'POST',
+        async: false,
+        data: { userId: userId },
+        success: function(response) {
+            if (!response.startsWith('Error')) {
+				console.log(response);
+                var datos = response.split('|');
+                var imgPath = datos[2] ? './../img/fotos/' + datos[2] : '../Content/image/user-default-blanco.png';
+                $('#userImage, #userHeaderImage').attr('src', imgPath);
+				$('#fotopequenia').attr('src',imgPath);
+				$('#fotogrande').attr('src',imgPath);
+            } else {
+                console.error('Error al obtener la información del usuario:', response);
+                $('#userName').text('Iniciar Sesión');
+            }
+        },
+        error: function() {
+            console.error('Error al conectar con el servidor.');
+            $('#userName').text('Iniciar Sesión');
+        }
+    });
+}
+function obtenerNombreUsuario() {
+    $.ajax({
+        url: '../controllers/Usuario/ObtenerNombre.php', 
+        type: 'POST',
+        data: { userId: userId }, 
+        success: function(response) {
+            $('#userName').text(response); 
+			$('#userHeaderName').text(response); 
+        },
+        error: function() {
+            console.error('Error al obtener el nombre del usuario');
+            $('#userName').text('Iniciar Sesión'); 
+        }
+    });
+}
+</script>
 	
 </body>
 </html>

@@ -75,9 +75,9 @@
             success: function(response) {
                 console.log('Login response:', response);
                 if (response.includes('success-admin')) { 
-                    window.location.href = 'views/Layout.php'; // Admin layout
+                    window.location.href = 'views/Layout.php'; 
                 } else if (response.includes('success-user')) {
-                    window.location.href = 'views/LayoutGeneral.php'; // General user layout
+                    window.location.href = 'views/LayoutGeneral.php'; 
                 } else {
                     alert('Acceso denegado');  
                 }

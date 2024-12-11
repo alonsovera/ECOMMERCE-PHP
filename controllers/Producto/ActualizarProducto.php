@@ -12,7 +12,6 @@ $conn = conectar();
 
 $imagenActual = isset($_POST['imagenActual']) ? $_POST['imagenActual'] : '';
 
-// Intenta obtener la imagen actual de la base de datos si no se envía una nueva
 if (empty($_FILES['image']['name']) && empty($imagenActual)) {
     $query = "SELECT Imagen FROM producto WHERE pkProducto = $id";
     $result = mysqli_query($conn, $query);
@@ -21,7 +20,7 @@ if (empty($_FILES['image']['name']) && empty($imagenActual)) {
     }
 }
 
-$imagen = $imagenActual; // Conserva la imagen actual por defecto
+$imagen = $imagenActual; 
 if (!empty($_FILES['image']['name'])) {
     $file_name = $_FILES['image']['name'];
     $ruta_completa = "../../img/" . $file_name;

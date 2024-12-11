@@ -1,3 +1,7 @@
+
+<?php
+session_start(); 
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -78,7 +82,7 @@
 		<header class="main-header">
 
 			<!-- Logo -->
-			<a href="/Dashboard" class="logo">
+			<a href="./Layout.php" class="logo">
 				<!-- mini logo for sidebar mini 50x50 pixels -->
 				<span class="logo-mini">
 					<img src="../Content/image/masterinpetslogo.png" alt="masterinpets" />
@@ -104,25 +108,21 @@
 						<!-- User Account Menu -->
 						<li class="dropdown user user-menu">
 							<!-- Menu Toggle Button -->
-							<a href="#" class="dropdown-toggle" data-toggle="dropdown">
-								<!-- The user image in the navbar-->
-								<img src="../Content/image/user-default-blanco.png" class="user-image" alt="User Image">
-								<span class="hidden-xs">NILTON VERA</span>
-							</a>
+							<a href="#" class="dropdown-toggle" data-toggle="dropdown" id="navbarDropdownMenuLink">
+									<img src="../Content/image/user-default-blanco.png" class="user-image" alt="User Image" id = "fotopequenia">
+									<span class="hidden-xs" id="userName">Iniciar Sesión</span>
+								</a>
 							<ul class="dropdown-menu">
 								<!-- The user image in the menu -->
 								<li class="user-header">
-									<img src="../Content/image/user-default-blanco.png" class="img-circle" alt="User Image">
-									<p>
-										NILTON VERA
-									</p>
+									<img src="../Content/image/user-default-blanco.png" class="img-circle" alt="User Image" id = "fotogrande">
+									<p id="userHeaderName">Iniciar Sesión</p>
 								</li>
 								<!-- Menu Footer-->	
 								<li class="user-footer">
-									<center>
-										<button>Cerrar sesión</button>
-									</center>
 									
+										<a href="Perfil.php" class="btn btn-default">Ver perfil</a>
+										<a href="../index.php" class="btn btn-default">Cerrar sesión</a>									
 								</li>
 							</ul>
 						</li>
@@ -141,7 +141,7 @@
 					<li class="header">Menu</li>
 					<li class="active"><a href="../views/Producto.php"><i class="fa fa-product-hunt"></i> <span>PRODUCTOS</span></a></li>
 					<li><a href="../views/Clientes.php"><i class="fa fa-users"></i> <span>CLIENTES</span></a></li>
-					<li><a href="../Ventas/Ventas.php"><i class="fa fa-shopping-cart"></i> <span>VENTAS</span></a></li>
+					<li><a href="../views/Ventas.php"><i class="fa fa-shopping-cart"></i> <span>VENTAS</span></a></li>
 				</ul>
 				<!-- /.sidebar-menu -->
 			</section>
@@ -162,7 +162,7 @@
                             <div class="row">
                                 <div class="col-sm-12"><h5 class="m-t-xs">Ingreso de producto	</h5></div>
                             </div>
-                            <form id="alumnoForm" method="post" enctype="multipart/form-data">
+                            <form id="productoForm" method="post" enctype="multipart/form-data">
 								<div class="form-group" id="indice" style="display:none;">
 									<label>Id</label>
 									<input type="text" class="form-control" id="id" disabled >
@@ -289,10 +289,26 @@
 	<!--SlimScroll-->
 	<script src="../Content/plugins/slimScroll/jquery.slimscroll.min.js"></script>
 	<script>
+    // Variables de PHP a JavaScript
+    <?php
+        if (isset($_SESSION['session_email'], $_SESSION['name'], $_SESSION['user_id'])) {
+            echo "var userEmail = " . json_encode($_SESSION['session_email']) . ";";
+            echo "var userName = " . json_encode($_SESSION['name']) . ";";
+            echo "var userId = " . json_encode($_SESSION['user_id']) . ";";
+            echo "console.log('Bienvenido, ' + userName + ' (' + userEmail + ')');";
+        } else {
+            echo "window.location.href = 'login.php';";  // Redireccionar si las sesiones no están definidas
+        }
+    ?>
+</script>
+
+	<script>
 var table;  
 var valor, editar = 0; 
 
 $(document).ready(function () {
+	obtenerNombreUsuario();
+    obtenerInformacionUsuario();
     $('.select2').select2();
     $.ajax({
         url: '../controllers/Categoria/ListaCategorias.php',
@@ -304,13 +320,14 @@ $(document).ready(function () {
             alert('Error al cargar las categorías');
         }
     });
-    table = $('#productosTable').DataTable({
+     table =  $('#productosTable').DataTable({
         "language": {
-            "url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json"
+            "url": "../Content/js/Spanish.json"  // Ruta relativa al archivo JSON local
         },
         "pageLength": 10
     });
     cargaProductos();
+    
 });
 
 function guardar() {
@@ -376,6 +393,7 @@ function editar_form(id) {
     $.ajax({
         type: "POST",
         url: "/tf/controllers/Producto/EditarProducto.php",
+        async:false,
         data: { id: id },
         success: function(response) {
             var datos = response.split(',');
@@ -399,10 +417,36 @@ function editar_form(id) {
         }
     });
 }
+function obtenerInformacionUsuario() {
+    $.ajax({
+        url: '../controllers/Usuario/ObtenerUsuario.php',
+        type: 'POST',
+        async: false,
+        data: { userId: userId },
+        success: function(response) {
+            if (!response.startsWith('Error')) {
+				console.log(response);
+                var datos = response.split('|');
+                var imgPath = datos[2] ? './../img/fotos/' + datos[2] : '../Content/image/user-default-blanco.png';
+                $('#userImage, #userHeaderImage').attr('src', imgPath);
+				$('#fotopequenia').attr('src',imgPath);
+				$('#fotogrande').attr('src',imgPath);
+            } else {
+                console.error('Error al obtener la información del usuario:', response);
+                $('#userName').text('Iniciar Sesión');
+            }
+        },
+        error: function() {
+            console.error('Error al conectar con el servidor.');
+            $('#userName').text('Iniciar Sesión');
+        }
+    });
+}
+
 
 
 function actualizar_form() {
-    var form = $('#alumnoForm')[0]; 
+    var form = $('#productoForm')[0]; 
     var formData = new FormData(form);
     formData.append('id', $('#id').val());
     $.ajax({
@@ -431,8 +475,51 @@ function actualizar_form() {
 						cancelar_form();
 						cargaProductos();
 }
+
+
 function guardar_form() {
-    var form = $('#alumnoForm')[0]; 
+    var valid = true; 
+
+    if ($('#producto').val().trim() === "") {
+        $('#error-producto').show();
+        $('#producto').addClass('is-invalid');
+        valid = false;
+    } else {
+        $('#error-producto').hide();
+        $('#producto').removeClass('is-invalid');
+    }
+
+    if ($('#descripcion').val().trim() === "") {
+        $('#error-descripcion').show();
+        $('#descripcion').addClass('is-invalid');
+        valid = false;
+    } else {
+        $('#error-descripcion').hide();
+        $('#descripcion').removeClass('is-invalid');
+    }
+
+    var precio = $('#precio').val().trim();
+    if (precio === "" || isNaN(precio) || parseFloat(precio) <= 0) {
+        $('#error-precio').show();
+        $('#precio').addClass('is-invalid');
+        valid = false;
+    } else {
+        $('#error-precio').hide();
+        $('#precio').removeClass('is-invalid');
+    }
+
+    var stock = $('#stock').val().trim();
+    if (stock === "" || isNaN(stock) || parseInt(stock, 10) < 0) {
+        $('#error-stock').show();
+        $('#stock').addClass('is-invalid');
+        valid = false;
+    } else {
+        $('#error-stock').hide();
+        $('#stock').removeClass('is-invalid');
+    }
+
+    if (valid) {
+        var form = $('#productoForm')[0]; 
     var formData = new FormData(form); 
 
     $.ajax({
@@ -460,11 +547,33 @@ function guardar_form() {
             console.error("Error al guardar: " + error);
         }
     });
+    }
 }
+
+
+
+function obtenerNombreUsuario() {
+    $.ajax({
+        url: '../controllers/Usuario/ObtenerNombre.php', 
+        type: 'POST',
+        async: false,
+        data: { userId: userId }, 
+        success: function(response) {
+            $('#userName').text(response); 
+			$('#userHeaderName').text(response); 
+        },
+        error: function() {
+            console.error('Error al obtener el nombre del usuario');
+            $('#userName').text('Iniciar Sesión'); 
+        }
+    });
+}
+
 function cargaProductos() {
     $.ajax({
         type: "POST",
         url: "../controllers/Producto/ListaProductos.php",
+        async:false,
         success: function(data) {
             if (table) {
                 table.clear().draw();

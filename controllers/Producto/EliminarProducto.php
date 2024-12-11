@@ -14,14 +14,12 @@ while($crow = mysqli_fetch_assoc($result)){
 }
 
 
-// Elimina el dato de la base de datos
 $sql = "DELETE FROM producto WHERE pkProducto = " . $id;
 $result = mysqli_query($conn, $sql);
 
 // Devuelve el dato eliminado
 $msg = 'El producto '.$producto.' ha sido eliminado';
 
-// Cerramos la conexión a la base de datos
 desconectar($conn);
 
 echo $msg;

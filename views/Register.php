@@ -188,13 +188,18 @@ function register() {
             password: password
         },
         success: function(response) {
-            console.log('Registro exitoso:', response);
-            window.location.href = 'LayoutGeneral.php';
-           // alert('Registro completado exitosamente.');
-        },
+                if(response.includes('exitosamente')) {
+                    console.log('Registro exitoso:', response);
+                    window.location.href = 'index.php';
+                } else if(response.includes('error-email-exists')) {
+                    alert('El correo ya está registrado. Por favor, use otro correo.');
+                } else {
+                    console.error('Error de registro:', response);
+                    alert('Hubo un error al registrar el usuario. Por favor, inténtelo de nuevo.');
+                }
+            },
         error: function(xhr) {
             console.error('Error de registro:', xhr.responseText);
-            //alert('Error al registrar.');
         }
     });
 }

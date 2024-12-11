@@ -4,12 +4,10 @@ include('../../administrador/config/bd.php');
 
 $valores = "";
 
-// Abrimos la conexión a la base de datos
 $conn = conectar();
 
 $num = 0;
 
-// Consulta a la base de datos
 $sql = "SELECT pkcliente, cNombre, cApellido, cCorreo, cTelefono, cDireccion FROM cliente";
 $result = mysqli_query($conn, $sql);
 
@@ -28,7 +26,6 @@ while($crow = mysqli_fetch_assoc($result)){
     $num++;
 }
 
-// Cerramos la conexión a la base de datos
 desconectar($conn);
 
 echo $valores.','.$num;
